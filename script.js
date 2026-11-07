@@ -64,6 +64,8 @@ showMoreBtn.addEventListener("click", () => { expanded = true; render(); });
 render();
 
 // 4. Contact form validation
+// Your Formspree form address (messages are delivered to your email)
+const FORM_ENDPOINT = "https://formspree.io/f/xeaawrwd";
 const form = document.getElementById("contact-form");
 const statusEl = document.getElementById("form-status");
 
@@ -79,10 +81,32 @@ form.addEventListener("submit", (e) => {
   if (!emailOk) { statusEl.textContent = "Enter a valid email address."; statusEl.classList.add("error"); form.email.focus(); return; }
   if (!message) { statusEl.textContent = "Write a message first."; statusEl.classList.add("error"); form.message.focus(); return; }
 
-  // To send real emails, connect this form to a service such as Formspree
-  statusEl.textContent = "Message ready. Connect a form service to send it.";
-  statusEl.classList.add("ok");
-  form.reset();
+    if (!FORM_ENDPOINT || FORM_ENDPOINT.includes("YOUR_ID")) {
+      statusEl.textContent = "The form is not connected yet. Please use the email link below.";
+      statusEl.classList.add("error");
+      return;
+    }
+
+    const sendBtn = form.querySelector("button[type='submit']");
+    sendBtn.disabled = true;
+    statusEl.textContent = "Sending...";
+
+    fetch(FORM_ENDPOINT, {
+      method: "POST",
+      headers: { "Accept": "application/json", "Content-Type": "application/json" },
+      body: JSON.stringify({ name, email, message })
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Request failed");
+        statusEl.textContent = "Thanks! Your message was sent.";
+        statusEl.classList.add("ok");
+        form.reset();
+      })
+      .catch(() => {
+        statusEl.textContent = "Something went wrong. Please email me directly.";
+        statusEl.classList.add("error");
+      })
+      .finally(() => { sendBtn.disabled = false; });
 });
 
 // 5. Footer year
